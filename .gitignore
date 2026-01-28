@@ -1,0 +1,12 @@
+#Ignore the virtual environment
+venv/
+#Ignore secrets and whatnot
+.env
+#Ignore chat configuration data
+data/*
+!data/.gitkeep
+
+#ignore pycache 
+__pycache__/
+
+scratch.py
