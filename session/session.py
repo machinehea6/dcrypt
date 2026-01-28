@@ -8,13 +8,15 @@ class Session():
         self.curr_chat = chat
         self.client = self.curr_chat.client
         self.recipient = self.curr_chat.recipient
-    def main_function(self):
-        artist = render.Artist()
-        first_message_id = self.curr_chat.get_messages('',1,True,'')[0].msg_id
-        artist.print_messages(self.curr_chat.get_messages('',10, True,''))
+        self.artist = render.Artist()
+        self.first_message_id = self.curr_chat.get_messages('',1,True,'')[0].msg_id 
+        self.backlog = self.curr_chat.get_messages('',10, True,'')
+        self.artist.print_messages(self.backlog)
+        
+    def main_loop(self):
         main_thread = threading.Thread(name='update_chat',
                                         target=self.query, daemon=True, 
-                                        kwargs={'first_message_id':first_message_id})
+                                        kwargs={'first_message_id':self.first_message_id})
         main_thread.start()
 
         while True:

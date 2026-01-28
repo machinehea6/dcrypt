@@ -196,10 +196,10 @@ class Chat:
         Returns: 
             List of Message objects.
                 
-            Attributes:
-                'msg_id': <message id of the message>
-                'author': <username of the author>
-                'message_body': <text content of the message>
+        Attributes:
+            'msg_id': <message id of the message>
+            'author': <username of the author>
+            'message_body': <text content of the message>
                 
 
             """
