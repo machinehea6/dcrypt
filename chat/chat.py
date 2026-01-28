@@ -1,8 +1,14 @@
-from dotenv import load_dotenv, dotenv_values
-from definitions import *
+# standard library modules
 import requests
 import json 
 import sys
+from dotenv import load_dotenv, dotenv_values
+#external modules
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
+
+# local modules
+from definitions import *
 load_dotenv()
 
 class Client():
@@ -27,9 +33,9 @@ class Client():
         
         """
         keys = self._get_keys()
-        self.pub_key = keys['pub_key']
-        self.priv_key = keys['priv_key']
-        self.api_key = keys['api_key']
+        self.priv_key, self.pub_key = self._get_keys()
+        
+        self.api_key = os.getenv('api_key')
 
     def _get_keys(self):
         """
@@ -41,15 +47,38 @@ class Client():
         Returns:
             credentials (dict[str]): returns public key, private key, and api key.
         """
-
         try:
-            return {'pub_key': os.getenv('pub'), 
-                    'priv_key': os.getenv('priv'),
-                    'api_key': os.getenv('api_key')
-                    }
+            with open(f"{ROOT_DIR}/data/secrets/priv_key.pem", "rb") as f:
+                data = f.read()
+                priv_key = RSA.import_key(data)
         except Exception as err:
-            print(f"Problem reading public and private keys from .env or reading api key from .env. Error: {err}")
+            print("There was a problem retrieving client private key.\n")
+            print("Make sure you have a private key file at /data/secrets/priv_key.pem.\n")
+            print(f"Error: {err}")
             sys.exit()
+        try:
+            with open(f"{ROOT_DIR}/data/secrets/pub_key.pem", "rb") as f:
+                data = f.read()
+                pub_key = RSA.import_key(data)
+        except Exception as err:
+            print("There was a problem retrieving client public key.\n")
+            print("Make sure you have a private key file at /data/secrets/pub_key.pem.\n")
+            print(f"Error: {err}")
+            sys.exit()
+
+        return priv_key, pub_key
+
+    def _gen_keys(self):
+        priv_key = RSA.generate(3072)
+        pub_key = priv_key.public_key()
+        pwd = b'secret'
+        with open(f"{ROOT_DIR}/data/secrets/priv_key.pem", "wb") as f:
+            data = priv_key.export_key()
+            f.write(data)
+        with open(f"{ROOT_DIR}/data/secrets/pub_key.pem", "wb") as f:
+            data = pub_key.export_key()
+            f.write(data)
+
 
 class Recipient():
     """
@@ -59,8 +88,9 @@ class Recipient():
         disc_id (str): the discord id of the recipient
         pub_key (str): the public key of the recipient
         channel_id (str): the channel id of the recipient
+        nickname (str): the nickname of the recipient
     """
-    def __init__(self, disc_id:str, pub_key:str, channel_id:str):
+    def __init__(self, nickname:str):
         """
         Method to initialize an empty Recipient object
 
@@ -72,11 +102,54 @@ class Recipient():
         Returns:
             None
         """
-        self.disc_id = disc_id
-        self.pub_key = pub_key
-        self.channel_id =channel_id
+        
+        self.nickname = nickname
+        config_info = self._get_info()
+        self.disc_id = config_info['disc_id']
+        self.channel_id =config_info['channel_id']
+        self.pub_key = self._get_pub_key()
 
-class Message():
+    def _get_info(self)->dict:
+        """
+        Private method to retrieve the recipient discord id and channel id.
+
+        Parameters:
+            None
+        
+        Return:
+            config data (dict): a dictionary containing channel id and discord id
+
+        """
+        
+        with open(f"{ROOT_DIR}/data/{self.nickname}/channel.conf","r") as file:
+            data = json.load(file)
+            return data
+
+    def _get_pub_key(self):
+        """
+        Private method to retrieve the recipient public key. 
+
+        Parameters:
+            None
+        
+        Return:
+            public_key (RSA public key): the recipient rsa public key
+
+        """
+
+        try:
+            with open(f"{ROOT_DIR}/data/{self.nickname}/pub_key.pem", "rb") as f:
+                data = f.read()
+                return RSA.import_key(data)
+        except Exception as err:
+            print("There was a problem retrieving recipient public key.\n")
+            print(f"Make sure you have a public key file at {ROOT_DIR}/data/{self.nickname}/pub_key.pem.\n")
+            print(f"Error: {err}")
+            sys.exit()
+
+
+
+class Message:
     """
     Class to store messages retrieved from chats.
 
@@ -86,7 +159,7 @@ class Message():
         message_body (str): A string containing the text content of the message.
 
     """
-    def  __init__(self, msg_id:str, author:str, message_body:str):
+    def  __init__(self):
         """
         Initializes an empty Message.
 
@@ -96,12 +169,6 @@ class Message():
             message_body (str): A string containing the text content of the message.
 
         """
-        self.msg_id = msg_id
-        self.author = author
-        self.message_body = message_body
-        self.is_encrypted = self._is_encrypted()
-        self.should_encrypt = self._should_encrypt()
-    
     def _is_encrypted(self):
         header = ''
         msg = "".join([''+x for x in reversed(self.message_body)])
@@ -115,9 +182,34 @@ class Message():
         else:
             return False
     
+
+    def encrypt(self):
+        return
+
+class OutMessage(Message):
+    """
+    Class to create an outbound message.
+
+    Attributes:
+        message_body (str): the body of the message to send 
+        to_encrypt (bool): whether the message body will be encrypted before sending, defaults to true
+        public_key (Recipeint.pub_key): public key for encryption 
+    """
+    def __init__(self, raw_msg:str, public_key: Recipient.pub_key):
+        self.raw_msg = raw_msg
+        self.pub_key = public_key
+        
+        self.message_body = self._process_message()
+
+    def _process_message(self):
+        if self._should_encrypt():
+            return self._encrypt()
+        else:
+            return self.raw_msg
+
     def _should_encrypt(self):
         header = ''
-        msg = "".join([''+x for x in reversed(self.message_body)])
+        msg = "".join([''+x for x in reversed(self.raw_msg)])
         try:
             for char in range(4):
                 header = header + msg[char]
@@ -127,6 +219,22 @@ class Message():
             return False
         else:
             return True
+    
+    def _encrypt(self):
+        cipher_rsa = PKCS1_OAEP.new(self.pub_key)
+        byte_msg = self.raw_msg.encode("utf-8")
+        encrypted_msg = cipher_rsa.encrypt(byte_msg)
+        return encrypted_msg
+
+class InMessage(Message):
+    def __init__(self, message_body:str, private_key: Client.priv_key):
+        self.private_key = private_key
+    def _decrypt():
+
+        return
+    
+    def _get_private_key():
+        return
     
 class Chat:
     """
@@ -143,11 +251,15 @@ class Chat:
 
         Parameters:
             nickname (str): the nickname of the chat
-            client (Client): a Client object 
-        """
 
-        self.client = Client()
+        Attributes: 
+            recipient (Recipient): a recipient object
+            client (Client): a client object
+        """
         self.nickname = nickname
+        self.recipient = Recipient(self.nickname)
+        self.client = Client()
+
 
     def send_message(self, message:Message):
         """
@@ -230,45 +342,50 @@ class Chat:
             return [Message(content['id'], content['author']['username'],content['content'])\
                     for content in response.json() if content['author']['id'] == self.recipient.disc_id]
 
+
 class NewChat(Chat):
         """
         Class to create and manage a chat with a new recipient
 
         Attributes:
-            recip_pub_key (Recipient.pub_key): recipient's public key
-            recip_disc_id (Recipient.discord_id): recipients discord id
-            channel_id (Recipient.channel_id): the id of the dm channel of the chat
             client (Client): A client object
+            recipient (Recipient): A recipient object
             nickname (str): nickname of the chat instance
         """
 
         def __init__(self, nickname:str):
-            query_data = ['pub_key', 'disc_id', 'channel_id']
-            query_results = self._get_init_data(query_data)
-            self.recipient = Recipient(query_results['disc_id'],query_results['pub_key'],query_results['channel_id'])
-            self.nickname = nickname
-            self.client = Client()
-            self._setup()
+            """
+            Method to initialize an empty NewChat object.
 
-        def _get_init_data(self, queries:list) -> dict:
+            Parameters:
+                nickname (str): the nickname of the chat to be used 
+
+            """
+
+            self.nickname = nickname
+            print(self.nickname)
+            self._setup()
+            self.recipient = Recipient(self.nickname)
+            self.client = Client()
+
+        def _get_init_data(self) -> dict:
             """
             Method to prompt user for details about recipient.
 
             Parameters:
-                queries (list): a list of fields to query
+                None
             
             Return: 
-                returns (dict): a dict with values matching the user inputs to the queries
+                returns (dict): 'disc_id' and 'channel_id' for the new recipient
             """
 
-            options = {
-                'pub_key': 'public key ',
+            returns  = {
                 'disc_id': 'discord id ',
                 'channel_id': 'channel id '
             }
-            returns = {}
-            for query in queries:
-                returns[query] = input((f"Please input {options[query]}: "))
+            
+            for query in returns.keys():
+                returns[query] = input((f"Please input {returns[query]}: "))
             
             return returns
 
@@ -283,24 +400,26 @@ class NewChat(Chat):
                 None
             """
             file_path = f"{ROOT_DIR}/data/{self.nickname}/"
-            print(file_path)
             try:
                 os.mkdir(file_path)
             except FileExistsError:
-                print("File already exists in data directory.")
-                sys.exit()
+                print("Data directory already exists. ")
+                cont = input("Continue? y/n")
+                if cont == 'y':
+                    pass
+                else:
+                    sys.exit()
+
             except PermissionError:
                 print("Insufficient permissions to write in data directory")
                 sys.exit()
 
-            
-            data = json.dumps({'pub_key':self.recipient.pub_key,
-                    'disc_id':self.recipient.disc_id,
-                    'channel_id':self.recipient.channel_id
-                    })
+            data = self._get_init_data()
+
             try:
                 with open(f"{file_path}channel.conf", "w") as conf_file:
-                    conf_file.write(data)
+                    conf_file.write(json.dumps(data))
+
             except PermissionError:
                 print(f"Insufficient permissions to open {file_path}")
                 sys.exit()
@@ -324,44 +443,20 @@ class ExisChat(Chat):
         Class to create and manage a chat with an existing recipient
 
         Attributes:
-            recip_pub_key (Recipient.pub_key): recipient's public key
-            recip_disc_id (Recipient.discord_id): recipients discord id
-            channel_id (Recipient.channel_id): the id of the dm channel of the chat
+            recipient (Recipient): A recipient object
             client (Client): A client object
             nickname (str): nickname of the chat instance
-            api_key (str): the api key used to connect
+
         """
 
         def __init__(self, nickname:str):
-            self.nickname = nickname
-            self.client = Client()
-            recipient_conf = self._read_conf()
-            self.recipient = Recipient(recipient_conf['disc_id'],recipient_conf['pub_key'],recipient_conf['channel_id'])
-            
-            
-            
-
-        def _read_conf(self) -> dict:
             """
-            Private method to read configuration file.
+            Method to initialize an empty ExistChat object.
 
             Parameters:
-                None
-            
-            Returns:
-                config_data (dict): contains 'pub_key', 'disc_id', and 'channel_id'
-            
-            Exceptions:
-                Permission error: calls sys.exit()
+                nickname (str): the nickname of the chat to be used 
+                
             """
 
-            file_path = f"{ROOT_DIR}/data/{self.nickname}/channel.conf"
-            try:
-                with open(file_path) as file:
-                    return json.load(file)
-            except PermissionError:
-                print(f"Insufficient permissions to open {file_path}")
-                sys.exit()
-            except Exception as err:
-                print(f"Error: {err}")
-                sys.exit()
+            super().__init__(nickname)
+
