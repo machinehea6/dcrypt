@@ -162,16 +162,17 @@ class Chat:
 
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
-            'Authorization': self.api_key
+            'Authorization': self.client.api_key
         }
 
         json_data = {
             'content':message.message_body
         }
 
-        response = requests.post(f"https://discord.com/api/v10/channels/{self.channel_id}/messages", headers=headers, json=json_data)
+        response = requests.post(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages", headers=headers, json=json_data)
         if response.status_code == 200:
             print("Message sent...")
+            print("> ")
         else:
             print(f"Error sending message...Code {response.status_code}")
             sys.exit()
@@ -203,9 +204,9 @@ class Chat:
 
             """
 
-        headers = {'authorization': self.api_key}
+        headers = {'authorization': self.client.api_key}
         base_url = 'https://discord.com/api/v10/channels/'
-        endpoint = f'{self.channel_id}/messages'
+        endpoint = f'{self.recipient.channel_id}/messages'
         full_url = f'{base_url}{endpoint}?limit={number_of_messages}'
         if last_message_id:
             full_url += f"&after={last_message_id}"
@@ -227,7 +228,7 @@ class Chat:
                 for content in response.json()]
         else: 
             return [Message(content['id'], content['author']['username'],content['content'])\
-                    for content in response.json() if content['author']['id'] == self.other_user_id]
+                    for content in response.json() if content['author']['id'] == self.recipient.disc_id]
 
 class NewChat(Chat):
         """
