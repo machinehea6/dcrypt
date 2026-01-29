@@ -26,8 +26,8 @@ pip install -r requirements.txt
 
 #### First Time Setup
 - Run first time setup. Have on hand your discord user id, api key, and discord username.  
-- Get your user id by clicking your profile in the discord client and clicking 'Copy User ID.' 
-*This is not the same as your username.*
+- Get your user id by clicking your profile in the discord client and clicking 'Copy User ID.' <br>
+**This is not the same as your username.**
 - Get your api key by doing the following:
     1. Open the discord *web client.* 
     2. Open any direct message.
@@ -43,21 +43,21 @@ python main.py fts
 
 #### Opening a New Chat
 - Have on hand your friend's discord id, the channel id of the dm, their public key file, and a nickname to call the chat.
-- To get their discord id right click on their name and click 'Copy User ID.' 
-*This is not the same as their username.*
-- To get their public key file, have them run first time setup and send you their pub_key.pem file, keep it somewhere easy to access. 
-*Keep the title as 'pub_key.pem'*
+- To get their discord id right click on their name and click 'Copy User ID.' <br>
+**This is not the same as their username.**
+- To get their public key file, have them run first time setup and send you their pub_key.pem file, keep it somewhere easy to access. <br>
+**Keep the title as 'pub_key.pem'**
 - To get the channel id, right click on the dm and click 'Copy Channel ID.'
 - Nickname is your preference.
 - With all this available, enter the following:
 ```Bash
-python main.py new_chat 'nickname'
+python main.py new_chat [chat_nickname]
 ```
 Note, nickname does not need to be enclosed in quotation marks.
 
 #### Opening an Existing Chat
 - All you need on hand is the nickname you selected for the chat.
 ```Bash
-python main.py open_chat 'nickname'
+python main.py open_chat [chat_nickname]
 ```
-Note, the 'nickname' argument should be as you entered it in setup verbatim. No need for quotation marks.
+Note, the 'nickname' argument should be as you entered it in setup, **verbatim**. 
