@@ -4,7 +4,7 @@ CLI wrapper for discord dms with integrated RSA encryption. If you don't own the
 
 ## Setup Guide
 ### Dependencies and Environment
-- Create a new virtual environment. *it must be titled 'venv'* 
+- Create a new virtual environment. *It must be titled 'venv'.* 
 ```Bash
 python -m venv venv
 ```
