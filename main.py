@@ -1,55 +1,53 @@
-import requests
-import json
+from chat.chat import *
+from session.session import *
 import sys
-import threading 
-import time 
-from chat.chat import Chat
-from chat.artist import Artist
-from chat.chat import Message 
-
-#################
-def query(first_message_id):
-    ls_message_id = first_message_id
-    while True:
-        chat = Chat(channel_id, other_user_id)
-        artist = Artist()
-
-        last_messages = chat.get_messages(ls_message_id, 5, False, chat.other_user_id)
-        if last_messages:
-            artist.print_messages(last_messages)
-            ls_message_id = last_messages[0].msg_id
-            print("> ")
-        time.sleep(1.0)
-######################
-
-"""
 def main():
-    chat = Chat(channel_id, other_user_id)
-    artist = Artist()
+    possible_args = {
+        'new_chat':'',
+        'open_chat':''
+    }
+    arguments = sys.argv
+    ind = 0
+    if arguments[1] == 'fts':
+        session.Setup()
+    else:
+        for argument in arguments[1:]:
+            if argument in possible_args:
+                try:
+                    possible_args[argument] = arguments[arguments.index(argument)+1]
+                except IndexError:
+                    print("Please enter arguments adjacent to one another.\n")
+                    print("Possible arguments are \'fst\' (enter first time setup),\n\
+                        \'new_chat\' <chat_nickname>,\n\
+                        or \'open_chat\' <chat_nickname>\n")
+                    print("Please only enter one of these options.")
+                    sys.exit()
 
-    first_message_id:str = chat.get_messages('',1,True,'')[0].msg_id
-
-    artist.print_messages(chat.get_messages('',10, True,''))
-    
-    main_thread = threading.Thread(name='update_chat',
-                               target=query, daemon=True, kwargs={'first_message_id':first_message_id})
-    main_thread.start()
-
-
-    while True:
-        new_message = Message('','',input("> "))
-        if new_message:
-            chat.send_message(new_message)
-
-main()
-"""
-
-def main():
-    #parse args 
-
-    #if setup -> setup
-
-    #if open -> open
-
-    #if new ->
-    return
+                if argument == 'new_chat':
+                    chat = NewChat(possible_args[argument])
+                    session = Session(chat)
+                    session.main_loop()
+                    
+                
+                elif argument == 'open_chat':
+                    chat = ExisChat(possible_args[argument])
+                    session = Session(chat)
+                    session.main_loop()
+                
+                else:
+                    print("Failure parsing args. Please enter your argument and option verbatim without quotation marks and separated by a space.\n")
+                    print("Possible arguments are \'fst\' (enter first time setup),\n\
+                        \'new_chat\' <chat_nickname>,\n\
+                        or \'open_chat\' <chat_nickname>\n")
+                    print("Please only enter one of these options.")
+                    sys.exit()
+            else:
+                print("No args detected.\n")
+                print("Possible arguments are \'fst\' (enter first time setup),\n\
+                    \'new_chat\' <chat_nickname>,\n\
+                    or \'open_chat\' <chat_nickname>\n")
+                print("Please only enter one of these options.")
+                sys.exit()
+        
+if __name__ == "__main__":
+    main()

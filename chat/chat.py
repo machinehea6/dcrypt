@@ -8,8 +8,8 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 # local modules
 from definitions import *
-import members
-import messages
+from chat.messages import *
+from chat.members import *
 load_dotenv()
 
 class Chat:
@@ -33,11 +33,11 @@ class Chat:
             client (Client): a client object
         """
         self.nickname = nickname
-        self.recipient = members.Recipient(self.nickname)
-        self.client = members.Client()
+        self.recipient = chat.members.Recipient(self.nickname)
+        self.client = chat.members.Client()
 
 
-    def send_message(self, message:Message):
+    def send_message(self, message:chat.messages.Message) -> bool:
         """
         Method to send a message to a channel.
 
@@ -45,7 +45,8 @@ class Chat:
            message (Message): A Message object.
         
         Returns:
-            None
+            sent (bool): returns True if got code 200
+
         """
 
         headers = {
@@ -54,18 +55,18 @@ class Chat:
         }
 
         json_data = {
-            'content':message.message_body
+            'content':message.output_text
         }
 
         response = requests.post(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages", headers=headers, json=json_data)
         if response.status_code == 200:
-            print("Message sent...")
-            print("> ")
+            return True
         else:
             print(f"Error sending message...Code {response.status_code}")
             sys.exit()
 
-    def get_messages(self,last_message_id:str=None, number_of_messages:int=1, both_authors:bool=True, author_id:str='') -> list[dict]:
+    def get_messages(self,last_message_id:str='', number_of_messages:int=1, both_authors:bool=True, author_id:str='') \
+                        -> list[chat.messages.InMessage]:
         """
         Method to get messages from a chat.
 
@@ -90,7 +91,7 @@ class Chat:
             'message_body': <text content of the message>
                 
 
-            """
+        """
 
         headers = {'authorization': self.client.api_key}
         base_url = 'https://discord.com/api/v10/channels/'
@@ -110,13 +111,24 @@ class Chat:
         except Exception as err: 
                 print(f"Other error occurred: {err}")
                 sys.exit()
-
         if both_authors:
-            return [Message(content['id'], content['author']['username'],content['content'])\
-                for content in response.json()]
-        else: 
-            return [Message(content['id'], content['author']['username'],content['content'])\
-                    for content in response.json() if content['author']['id'] == self.recipient.disc_id]
+            return [InMessage(output, self.client.priv_key) for output in response.json()]
+        else:
+            return [InMessage(output, self.client.priv_key) for output in response.json() if output['author']['id'] == self.recipient.disc_id]
+    
+    def fetch_latest(self, last_message_id:str='') -> bool:
+        if last_message_id:
+            headers = headers = {'authorization': self.client.api_key}
+            receive = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages?limit=1&after={last_message_id}", headers=headers)
+            if (len(receive.json()) > 0):
+                if receive.json()[0]['author']['id'] == self.recipient.disc_id:
+                    return True
+            else: 
+                return False
+        else:
+            headers = headers = {'authorization': self.client.api_key}
+            receive = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages?limit=1", headers=headers)
+            return receive.json()[0]['id']
 
 class NewChat(Chat):
         """
@@ -138,10 +150,9 @@ class NewChat(Chat):
             """
 
             self.nickname = nickname
-            print(self.nickname)
             self._setup()
-            self.recipient = members.Recipient(self.nickname)
-            self.client = members.Client()
+            self.recipient = chat.members.Recipient(self.nickname)
+            self.client = chat.members.Client()
 
         def _get_init_data(self) -> dict:
             """

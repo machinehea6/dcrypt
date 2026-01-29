@@ -2,6 +2,8 @@ from dotenv import load_dotenv, dotenv_values
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 from definitions import *
+import json
+import sys
 load_dotenv()
 
 class Client():
@@ -12,6 +14,8 @@ class Client():
         pub_key (str): client's public key
         priv_key (str): client's private key
         api_key (str): client's api key
+        username (str): the client's discord username
+        user_id (str): the client's discord id
     """
 
     def __init__(self):
@@ -27,9 +31,22 @@ class Client():
         """
         keys = self._get_keys()
         self.priv_key, self.pub_key = self._get_keys()
-        
         self.api_key = os.getenv('api_key')
+        self.username, self.user_id = self._disc_details()
 
+    def _disc_details(self):
+        username = os.getenv('username')
+        user_id = os.getenv('user_id')
+
+        if (username == None) or  (user_id  == None):
+            print("Could not find client username and id\n")
+            username = input("Enter client discord username: ")
+            user_id = input("Enter client discord user id: ")
+            os.environ['username'] = username
+            os.environ['user_id'] = user_id
+            return username, user_id
+        else:
+             return username, user_id
     def _get_keys(self):
         """
         Private method to retrieve credentials
@@ -61,16 +78,7 @@ class Client():
 
         return priv_key, pub_key
 
-    def _gen_keys(self):
-        priv_key = RSA.generate(3072)
-        pub_key = priv_key.public_key()
-        pwd = b'secret'
-        with open(f"{ROOT_DIR}/data/secrets/priv_key.pem", "wb") as f:
-            data = priv_key.export_key()
-            f.write(data)
-        with open(f"{ROOT_DIR}/data/secrets/pub_key.pem", "wb") as f:
-            data = pub_key.export_key()
-            f.write(data)
+
 
 
 class Recipient():

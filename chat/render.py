@@ -1,4 +1,4 @@
-from chat.chat import Message
+
 class Artist():
     def __init__(self):
         return
@@ -20,7 +20,7 @@ class Artist():
                 name = name + ' '
         return name
 
-    def print_messages(self, all_messages_to_print:list[Message]) -> None:
+    def print_messages(self, all_messages_to_print:list[InMessage]) -> None:
         """
         Method to print messages to the stdio.
 
@@ -32,6 +32,7 @@ class Artist():
         """
 
         for message in reversed(all_messages_to_print):
-            message, author = message.message_body, message.author
-            print(f"{self._pad_name(author)}: {message}\n")
+            message, author, encrypted = message.output_text, message.author, message.is_encrypted
+            print(f"{self._pad_name(author)} [{encrypted}]: {message}\n")
+
 
