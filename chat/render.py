@@ -1,5 +1,16 @@
 
 class Artist():
+    """
+    Class to handle rendering the chat.
+
+    Public Methods:
+        print_messages():
+            Accepts a list of messages as an argument and prints them them to terminal.
+    
+    Private Methods:
+        _pad_name():
+            Accepts the author a message and returns the name with the addition of padding.
+    """
     def __init__(self):
         return
 
@@ -18,7 +29,7 @@ class Artist():
             message, author, encrypted = message.output_text, message.author, message.is_encrypted
             print(f"{self._pad_name(author)} [{encrypted}]: {message}\n")
 
-    def _pad_name(self, name:str) -> str:
+    def _pad_name(self, name:Message.author) -> str:
         """
         Private method to pad spaces around the author name for printing. 
 

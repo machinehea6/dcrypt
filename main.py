@@ -2,7 +2,7 @@ from chat.chat import *
 from session.session import Session
 from session.setup import SetupUtils
 import sys
-def main():z
+def main():
     possible_args = {
         'new_chat':'',
         'open_chat':''

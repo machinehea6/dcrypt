@@ -13,11 +13,24 @@ class Client():
     Class to store client configuration data.
 
     Attributes:
-        pub_key (str): client's public key
-        priv_key (str): client's private key
+        pub_key (RSA.public_key): client's public key
+        priv_key (RSA.private_key): client's private key
         api_key (str): client's api key
         username (str): the client's discord username
         user_id (str): the client's discord id
+    
+    Private Methods:
+        _disc_details():
+            Reads the username and user_ids values from the .env file. If it cannot retrieve
+            them, prompts the user to create new ones, logs them to .env, then updates them for the current session.
+        
+        _get_rsa_keys():
+            Reads the client rsa public and private key from data/secrets and returns them. If they cannot be read or
+            don't exist, it will create them.
+    
+    Public Methods:
+        None
+
     """
 
     def __init__(self):
@@ -32,8 +45,8 @@ class Client():
         
         """
         self.setup_tool = setup.SetupUtils()
-        keys = self._get_keys()
-        self.priv_key, self.pub_key = self._get_keys()
+        keys = self._get_rsa_keys()
+        self.priv_key, self.pub_key = self._get_rsa_keys()
         self.api_key = os.getenv('api_key')
         self.username, self.user_id = self._disc_details()
 
@@ -56,7 +69,7 @@ class Client():
         else:
              return username, user_id
 
-    def _get_keys(self):
+    def _get_rsa_keys(self):
         """
         Private method to retrieve credentials
 
@@ -64,7 +77,7 @@ class Client():
             None
         
         Returns:
-            credentials (dict[str]): returns public key, private key, and api key.
+            credentials (RSA.private_key, RSA.public_key): returns both private and public keys
         """
         try:
             with open(f"{ROOT_DIR}/data/secrets/priv_key.pem", "rb") as f:
@@ -93,17 +106,27 @@ class Client():
         return priv_key, pub_key
 
 
-
-
 class Recipient():
     """
     Class to store recipient configuration data
 
     Attributes: 
-        disc_id (str): the discord id of the recipient
-        pub_key (str): the public key of the recipient
-        channel_id (str): the channel id of the recipient
         nickname (str): the nickname of the recipient
+        disc_id (str): the discord id of the recipient
+        channel_id (str): the channel id of the recipient
+        pub_key (RSA.public_key): the public key of the recipient
+
+    Private Methods: 
+        _get_info():
+            Reads the channel.conf file and returns a dict with user discord id and user channel id. 
+        
+        _get_pub_key():
+            Reads the pub_key.pem file located at data/<nickname>. If one does not exist it will prompt the user for one. 
+            Then it returns a RSA.public_key object.
+    
+    Public Methods:
+        None
+        
     """
     def __init__(self, nickname:str):
         """

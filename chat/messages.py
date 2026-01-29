@@ -12,7 +12,17 @@ class OutMessage():
         output_text (str): the body of the message to send 
         to_encrypt (bool): whether the message body will be encrypted before sending, defaults to true
         public_key (Recipeint.pub_key): public key for encryption 
+    
+    Private Methods:
+        _process_message():
+            Determines whether the input message should be encrypted, if not, returns the string without the -PLN postfix.
+        
+        _should_encrypt():
+            Determines whether the message has a -PLN postfix. If so, returns False and sets OutMessage.is_encrypted False, else returns True.
 
+        _encrypt():
+            Returns the encrypted version of the message body.
+            
     """
 
     def __init__(self, input_text:str, public_key: members.Recipient.pub_key):
@@ -86,6 +96,21 @@ class InMessage():
         output_text (str): the text after processing
         author (str): the author of the message 
         is_encrypted (str): whether the message was encrypted on arrival
+    
+    Private Methods:
+        _process_message():
+            Parses incoming messages. Determines if they are encrypted, if not, sets InMessage.is_encrypted to False, then returns message body.
+            Else, leaves InMessage.is_encrypted as True and returns decrypted message in utf-8 plaintext.
+        
+        _decrypt():
+            Decrypts the message using the private key and returns the message in bytees.
+        
+        _byte_mark_remover():
+            Removes the initial b' and trailing ' from bytes converted to a string and returns the clean string.
+    
+    Public Methods:
+        None
+
     """
 
     def __init__(self, message_json:json, private_key: members.Client.priv_key):
@@ -121,7 +146,7 @@ class InMessage():
         except Exception as err:
             return '[EMPTY MESSAGE]'
         if header in ['b\'', 'b\"']:
-            return self._byte_mark_remover(str(self._decrypt(self.input_text)))
+            return self._byte_mark_remover(str(self._decrypt()))
         else:
             self.is_encrypted = False
             return self._byte_mark_remover(str(self.input_text.encode('utf=8')))
@@ -135,7 +160,7 @@ class InMessage():
         """
 
         rsa_cipher = PKCS1_OAEP.new(self.priv_key)
-        message_as_bytes = eval(input_msg)
+        message_as_bytes = eval(self.input_text)
         try:
             return rsa_cipher.decrypt(message_as_bytes)
         except ValueError:

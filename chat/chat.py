@@ -17,8 +17,21 @@ class Chat:
     A Superclass to create and manage chat configuration data, get messages, and send messages.
 
     Attributes:
-        client (Client): a client
+        client (members.Client): a client
+        recipient (members.Recipient): a recipient object
         nickname (str): nickname of the chat instance
+        setup_tool (setup.SetupUtils): a SetupUtils object
+    
+    Private Methods: 
+        None 
+
+    Public Methods:
+        send_message(chat.messages.OutMessage): 
+            Encrypts the body text of an OutMessage object with the
+            recipient's public key and sends it to the channel with a post request.
+        
+        get_messages():
+            Fill this out
     """
 
     def __init__(self, nickname:str):
@@ -27,11 +40,8 @@ class Chat:
 
         Parameters:
             nickname (str): the nickname of the chat
-
-        Attributes: 
-            recipient (Recipient): a recipient object
-            client (Client): a client object
         """
+
         self.nickname = nickname
         self.recipient = chat.members.Recipient(self.nickname)
         self.client = chat.members.Client()
@@ -181,6 +191,7 @@ class Chat:
         else:
             return False
 
+
 class NewChat(Chat):
         """
         Class to create and manage a chat with a new recipient
@@ -189,6 +200,21 @@ class NewChat(Chat):
             client (Client): A client object
             recipient (Recipient): A recipient object
             nickname (str): nickname of the chat instance
+        
+        Private Methods:
+            _get_recip_data():
+                Gets the recipient user id and channel id from the 
+                channel.conf file of the recipient.
+            
+            _setup():
+                Creates a new data directory titled <nickname> and 
+                populates it with a chat_status file and a channel.conf file.
+
+                After this, it prompts the user for the recipient channel id and
+                user id.
+
+        Public Methods:
+            None
         """
 
         def __init__(self, nickname:str):
@@ -275,15 +301,20 @@ class NewChat(Chat):
                 print(f"Error: {err}")
             print(f"Status tracker created for {self.nickname}\n")
 
+
 class ExisChat(Chat):
         """
-        Class to create and manage a chat with an existing recipient
+        Class to create and manage a chat with an existing recipient.
+        
+        Exists to provide readability to code base, currently has no unique attributes or methods.
 
         Attributes:
-            recipient (Recipient): A recipient object
-            client (Client): A client object
-            nickname (str): nickname of the chat instance
+            Same as Chat superclass.
 
+        Private Methods:
+            Same as Chat superclass.
+        Methods:
+            Same as Chat superclass.
         """
 
         def __init__(self, nickname:str):

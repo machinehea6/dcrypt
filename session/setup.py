@@ -7,22 +7,74 @@ from dotenv import *
 from pathlib import Path 
 
 class SetupUtils():
+    """
+    Class to manage setup of dcrypt, creation of config data, and retrieval of config data.
+
+    Attributes:
+        env_file_path (Path): the location of the .env file of dcrypt
+    
+    Private Methods:
+        _has_api_key():
+            Checks the .env file for the client's discord api key. Returns True if yes, False if not.
+        
+        _has_client_config():
+            Checks for the user_id and username variables in the .env file. Returns True if both,
+            False if not.
+        
+        _has_rsa_keys():
+            Checks data/secrets for pub_key.pem and priv_key.pem. If they are there, returns True,
+            else, False.
+        
+        _destroy_env_file():
+            Deletes the existing .env file at the dcrypt program root.
+        
+        _make_env_file():
+            Creates a blank .env file at dcrypt program root.
+
+    Public Methods:
+        first_time_setup():
+            Checks if dcrypt has access to client rsa keys, api key, user id and username. 
+            If not:
+                Creates the necessary files and prompts the user for necessary input.
+            If yes:
+                Asks the user if they want to reset.
+                    If yes:
+                        Deletes all config data and builds new.
+                    If no:
+                        Exits the program.
+        
+        set_api_key():
+            Takes user input to get api key, then attempts to write it to .env. Returns True if successful, False if not.
+        
+        set_client_config():
+            Prompts client for their discord id and discord username. Returns true if both are successful, else False.
+        
+        reset_all_config():
+            Prompts the user to reset all config data for dcrypt. 
+            If yes:
+                Deletes all files in data/secrets and deletes .env file.
+                Generates new key pair at data/secrets
+
+                Prompts user for api key, discord id, and discord username.
+            
+            If no:
+                Exits dcrypt.
+        
+        change_env_variable(key, value):
+            Takes a key:value pair and updates the .env file with them, then reloads the env to take effect during the
+            current session. Returns True if successful, else False.
+        
+        gen_rsa_keys():
+            Generates an rsa keypair and stores them at data/secrets. Returns True if successful, otherwise calls sys.exit()
+
+    """
+
     def __init__(self):
+        """Creates a new SetupUtils object. Sets .env file path."""
         self.env_file_path = Path(f"{ROOT_DIR}/.env")
         return
 
-    def first_time_setup(self):
-        is_setup = (self.has_rsa_keys() and self.has_api_key() and self.has_user_config)
-        if is_setup == False:
-            self.make_env_file()
-            self.gen_rsa_key_files()
-            self.set_api_key()
-            self.set_user_config()
-            print(f"Setup complete. Public and private keys placed at: {ROOT_DIR}/data/secrets.")
-        else:
-            self.reset_all_config()
-
-    def has_api_key(self) -> bool:
+    def _has_api_key(self) -> bool:
         """
         Checks the .env file for an api_key
 
@@ -38,7 +90,7 @@ class SetupUtils():
         else:
             return True
 
-    def has_user_config(self) -> bool:
+    def _has_client_config(self) -> bool:
         """
         Function to check for user_id and username variables in the .env file.
 
@@ -62,7 +114,7 @@ class SetupUtils():
         else:
             return False
 
-    def has_rsa_keys(self):
+    def _has_rsa_keys(self):
         try:
             key_files = os.listdir(f"{ROOT_DIR}/data/secrets")
             if len(key_files) < 2:
@@ -72,7 +124,32 @@ class SetupUtils():
         except FileNotFoundError:
             os.mkdir(f"{ROOT_DIR}/data/secrets")
             return False
-    
+
+    def _destroy_env_file(self):
+        try:
+            os.remove(f"{ROOT_DIR}/.env")
+        except PermissionError:
+            print("Insufficient permissions to delete .env")
+            sys.exit()
+
+    def _make_env_file(self):
+        try:
+            with open(f"{ROOT_DIR}/.env","w") as env:
+                pass
+        except FileExistsError:
+            pass
+
+    def first_time_setup(self):
+        is_setup = (self._has_rsa_keys() and self._has_api_key() and self._has_client_config())
+        if is_setup == False:
+            self._make_env_file()
+            self.gen_rsa_key_files()
+            self.set_api_key()
+            self.set_client_config()
+            print(f"Setup complete. Public and private keys placed at: {ROOT_DIR}/data/secrets.")
+        else:
+            self.reset_all_config()
+
     def set_api_key(self) -> bool:
         """
         Method to write api_key data to the .env file.
@@ -97,7 +174,7 @@ class SetupUtils():
             print("Could not set api_key environment variable.")
             return False
 
-    def set_user_config(self) -> bool:
+    def set_client_config(self) -> bool:
         """
         Method to place the client's config data in the .env file.
 
@@ -159,13 +236,13 @@ class SetupUtils():
 
         if reset == 'y':
             try:
-                self.destroy_env_file()
+                self._destroy_env_file()
                 print("Existing .env file deleted.")
                 self.gen_rsa_key_files()
                 print("New keys generated.")
-                self.make_env_file()
+                self._make_env_file()
                 print("Created")
-                self.set_user_config()
+                self.set_client_config()
                 print("New user config set.")
                 self.set_api_key()
                 print("New api key set.")
@@ -206,20 +283,6 @@ class SetupUtils():
             print(f"Problem setting or retrieving .env key value pair key:{key}, value: {value}.\n")
             print(f"Error: {err}")
             return False
-
-    def destroy_env_file(self):
-        try:
-            os.remove(f"{ROOT_DIR}/.env")
-        except PermissionError:
-            print("Insufficient permissions to delete .env")
-            sys.exit()
-
-    def make_env_file(self):
-        try:
-            with open(f"{ROOT_DIR}/.env","w") as env:
-                pass
-        except FileExistsError:
-            pass
 
     def gen_rsa_key_files(self) -> bool:
         """
