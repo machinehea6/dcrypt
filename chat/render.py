@@ -3,6 +3,21 @@ class Artist():
     def __init__(self):
         return
 
+    def print_messages(self, all_messages_to_print:list[InMessage]) -> None:
+        """
+        Method to print messages to the console.
+
+        Parameters:
+            A list of Message objects: each one has the attributes 'msg_id', 'author', and 'message_body.'
+
+        Returns:
+            None
+        """
+
+        for message in reversed(all_messages_to_print): # prints from earliest message to received to latest
+            message, author, encrypted = message.output_text, message.author, message.is_encrypted
+            print(f"{self._pad_name(author)} [{encrypted}]: {message}\n")
+
     def _pad_name(self, name:str) -> str:
         """
         Private method to pad spaces around the author name for printing. 
@@ -19,20 +34,5 @@ class Artist():
             while len(name) < 12:
                 name = name + ' '
         return name
-
-    def print_messages(self, all_messages_to_print:list[InMessage]) -> None:
-        """
-        Method to print messages to the stdio.
-
-        Parameters:
-            A list of Message objects): each one has the attributes 'msg_id', 'author', and 'message_body.'
-
-        Returns:
-            None
-        """
-
-        for message in reversed(all_messages_to_print):
-            message, author, encrypted = message.output_text, message.author, message.is_encrypted
-            print(f"{self._pad_name(author)} [{encrypted}]: {message}\n")
 
 

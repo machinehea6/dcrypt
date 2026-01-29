@@ -14,7 +14,7 @@ load_dotenv()
 
 class Chat:
     """
-    A Superclass to create and manage chat sessions.
+    A Superclass to create and manage chat configuration data, get messages, and send messages.
 
     Attributes:
         client (Client): a client
@@ -35,6 +35,7 @@ class Chat:
         self.nickname = nickname
         self.recipient = chat.members.Recipient(self.nickname)
         self.client = chat.members.Client()
+        self.setup_tool = setup.SetupUtils()
 
 
     def send_message(self, message:chat.messages.Message) -> bool:
@@ -45,25 +46,62 @@ class Chat:
            message (Message): A Message object.
         
         Returns:
-            sent (bool): returns True if got code 200
+            sent (bool): returns True if got code 200, returns False if any other.
 
         """
 
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
-            'Authorization': self.client.api_key
-        }
+        def header(api_key:str)->dict:
+            return {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
+                'Authorization': api_key
+            }
 
-        json_data = {
-            'content':message.output_text
-        }
+        def json_data(message_text:str) -> dict:
+            return {
+                'content':message_text
+            }
 
-        response = requests.post(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages", headers=headers, json=json_data)
+        def make_request() -> requests.Response:
+            response = requests.post(
+                                f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages",
+                                headers=header(self.client.api_key),
+                                json=json_data(message.output_text)
+                                )
+            return response
+        
+        response = make_request()
+
         if response.status_code == 200:
             return True
+
+        elif response.status_code == 401: # will set new api key and try again
+            print(f"Got code 401.\n")
+            new_api_key = (f"Enter new api key to try: ")
+            self.setup_tool.change_env_variable('api_key', new_api_key)
+            self.client.api_key = os.getenv('api_key') # changes client api key for future requests
+
+            if make_request().status_code == 200:
+                return True
+
+            else:
+                print(f"Still could not complete the request. Status code: {response.status_code}")
+                return False
+
+        elif response.status_code == 403: # will set new api key and try again
+            print(f"Got code 403.\n")
+            new_api_key = (f"Enter new api key to try: ")
+            self.setup_tool.change_env_variable('api_key', new_api_key)
+            self.client.api_key = os.getenv('api_key') # changes client api key for future requests
+
+            response = make_request()
+            if response.status_code == 200:
+                return True
+            else:
+                print(f"Still could not complete the request. Status code: {response.status_code}")
+                return False
         else:
-            print(f"Error sending message...Code {response.status_code}")
-            sys.exit()
+            print(f"Unable to send message. Response code:{response.status_code}")
+            return False
 
     def get_messages(self,last_message_id:str='', number_of_messages:int=1, both_authors:bool=True, author_id:str='') \
                         -> list[chat.messages.InMessage]:
@@ -167,7 +205,7 @@ class NewChat(Chat):
             self.recipient = chat.members.Recipient(self.nickname)
             self.client = chat.members.Client()
 
-        def _get_init_data(self) -> dict:
+        def _get_recip_data(self) -> dict:
             """
             Method to prompt user for details about recipient.
 
@@ -213,7 +251,7 @@ class NewChat(Chat):
                 print("Insufficient permissions to write in data directory")
                 sys.exit()
 
-            data = self._get_init_data()
+            data = self._get_recip_data()
 
             try:
                 with open(f"{file_path}channel.conf", "w") as conf_file:

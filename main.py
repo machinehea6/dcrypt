@@ -1,16 +1,17 @@
 from chat.chat import *
 from session.session import Session
-from session.setup import Setup
+from session.setup import SetupUtils
 import sys
-def main():
+def main():z
     possible_args = {
         'new_chat':'',
         'open_chat':''
     }
+    setup_tools = SetupUtils()
     arguments = sys.argv
     ind = 0
     if arguments[1] == 'fts':
-        first_time_setup = Setup()
+        setup_tools.first_time_setup()
     else:
         for argument in arguments[1:]:
             if argument in possible_args:
@@ -27,13 +28,13 @@ def main():
                 if argument == 'new_chat':
                     chat = NewChat(possible_args[argument])
                     session = Session(chat)
-                    session.main_loop()
+                    session._main_loop()
                     
                 
                 elif argument == 'open_chat':
                     chat = ExisChat(possible_args[argument])
                     session = Session(chat)
-                    session.main_loop()
+                    session._main_loop()
                 
                 else:
                     print("Failure parsing args. Please enter your argument and option verbatim without quotation marks and separated by a space.\n")

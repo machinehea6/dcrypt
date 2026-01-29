@@ -11,12 +11,16 @@ class Session():
         self.client = self.chat.client
         self.recipient = self.chat.recipient
         self.artist = render.Artist()
-        self.client_username = self.client.username
-        self.client_user_id = self.client.user_id
         self.backlog = chat.get_messages('',10,True)
         self.artist.print_messages(self.backlog)
 
-    def main_loop(self):
+    def start_session(self):
+        if self.chat.ping == True:
+            print("Connection successful")
+        else:
+            api_key = (f"Connection failed, input new api key: ")
+
+    def _main_loop(self):
         main_thread = threading.Thread(name='update_chat',
                                         target=self._update_chat, daemon=True,)
         main_thread.start()
@@ -30,7 +34,7 @@ class Session():
         if text:
             new_message = chat.OutMessage(text, self.recipient.pub_key)
             self.chat.send_message(new_message)
-            print(f"{self.artist._pad_name(self.client_username)} [{new_message.is_encrypted}]: {text}\n")
+            print(f"{self.artist._pad_name(self.client.username)} [{new_message.is_encrypted}]: {text}\n")
 
 
     def _update_chat(self):
@@ -38,14 +42,16 @@ class Session():
         last_message_id = chat.fetch_latest()
         artist = render.Artist()
         while True:
-            if chat.fetch_latest(last_message_id):
-                print("got it")
-                messages = self.chat.get_messages(last_message_id,5,False,self.recipient.disc_id)
-                artist.print_messages(messages)
-                last_message_id = messages[0].msg_id
+            while True:
+                if chat.fetch_latest(last_message_id):
+                    break
+                else:
+                    time.sleep(1.0)
+            messages = self.chat.get_messages(last_message_id,5,False,self.recipient.disc_id)
+            artist.print_messages(messages)
+            last_message_id = messages[-1].msg_id
 
             time.sleep(1.0)
     
-    def _check_for_messages(self, last_message_id) -> bool:
-        
+    
 

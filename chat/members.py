@@ -4,6 +4,8 @@ from Crypto.Cipher import PKCS1_OAEP
 from definitions import *
 import json
 import sys
+from session import setup
+
 load_dotenv()
 
 class Client():
@@ -29,6 +31,7 @@ class Client():
             None
         
         """
+        self.setup_tool = setup.SetupUtils()
         keys = self._get_keys()
         self.priv_key, self.pub_key = self._get_keys()
         self.api_key = os.getenv('api_key')
@@ -42,11 +45,17 @@ class Client():
             print("Could not find client username and id\n")
             username = input("Enter client discord username: ")
             user_id = input("Enter client discord user id: ")
-            os.environ['username'] = username
-            os.environ['user_id'] = user_id
+            self.setup_tool.change_env_variable('username', username)
+            self.setup_tool.change_env_variable('user_id', user_id)
+
+            # the above function has changed the env variables in the current session.
+            username = os.getenv('username')
+            user_id = os.getenv('user_id')
+
             return username, user_id
         else:
              return username, user_id
+
     def _get_keys(self):
         """
         Private method to retrieve credentials
@@ -61,6 +70,11 @@ class Client():
             with open(f"{ROOT_DIR}/data/secrets/priv_key.pem", "rb") as f:
                 data = f.read()
                 priv_key = RSA.import_key(data)
+
+        except FileExistsError:
+            print("No private key file, creating new public and private keys.\n")
+            setup_tool.gen_rsa_key_files()
+
         except Exception as err:
             print("There was a problem retrieving client private key.\n")
             print("Make sure you have a private key file at /data/secrets/priv_key.pem.\n")
@@ -137,11 +151,40 @@ class Recipient():
             public_key (RSA public key): the recipient rsa public key
 
         """
-
-        try:
+        def read_key() -> RSA.public_key:
             with open(f"{ROOT_DIR}/data/{self.nickname}/pub_key.pem", "rb") as f:
                 data = f.read()
                 return RSA.import_key(data)
+        
+        def prompt_for_file() -> str:
+            print(f"Could not find a client public key file. Please have them send you it and place it in {ROOT_DIR}/data/{self.nickname}/ as \'pub_key.pem'\n")
+            print(f"If you think you've already done this, make sure that it is titled verbatim: pub_key.pem")
+            return input(f"Enter y when you have placed the file, or changed the title, or press n to close the program.\n").lower()
+           
+        try:
+            read_key()
+
+        except FileNotFoundError:
+            proceed = prompt_for_file()
+            if proceed == 'y':
+                key = read_key()
+                if key:
+                    print("Public key successfully retrieved.")
+                    return key
+                else:
+                    print("Still could not read key file, or key file is empty.")
+                    sys.exit()
+
+            elif proceed == 'n':
+                sys.exit()
+            else:
+                print('Problem with your input...')
+                proceed()
+
+        except PermissionError:
+            print("Insufficient permissions to read public key data, please rerun dcrypt after changing permissions.")
+            sys.exit()
+        
         except Exception as err:
             print("There was a problem retrieving recipient public key.\n")
             print(f"Make sure you have a public key file at {ROOT_DIR}/data/{self.nickname}/pub_key.pem.\n")
