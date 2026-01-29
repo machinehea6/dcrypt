@@ -1,5 +1,6 @@
 from chat.chat import *
-from session.session import *
+from session.session import Session
+from session.setup import Setup
 import sys
 def main():
     possible_args = {
@@ -9,7 +10,7 @@ def main():
     arguments = sys.argv
     ind = 0
     if arguments[1] == 'fts':
-        session.Setup()
+        first_time_setup = Setup()
     else:
         for argument in arguments[1:]:
             if argument in possible_args:

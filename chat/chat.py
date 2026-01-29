@@ -129,6 +129,19 @@ class Chat:
             headers = headers = {'authorization': self.client.api_key}
             receive = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages?limit=1", headers=headers)
             return receive.json()[0]['id']
+    
+    def ping(self) -> bool:
+        """
+        Method to check the connection status of a chat.
+
+        Returns:
+            connection status (bool): true if 200, false if other.
+        """
+        response = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages")
+        if response.status_code == 200:
+            return True
+        else:
+            return False
 
 class NewChat(Chat):
         """
