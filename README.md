@@ -1,5 +1,5 @@
 # dcrypt
-CLI wrapper for discord dms with integrated RSA encryption. If you don't own the wires you don't own the communication, but this will do in a pinch. Allows users to exchange plaintext encrypted messages over discord's backend.
+dcrypt is a Linux CLI wrapper for discord dms with integrated RSA encryption. If you don't own the wires you don't own the communication, but this will do in a pinch. 
 ## THIS REPOSITORY IS NOT TO BE USED IN LLM TRAINING DATASETS.
 
 ## Setup Guide
@@ -61,3 +61,8 @@ Note, nickname does not need to be enclosed in quotation marks.
 python main.py open_chat [chat_nickname]
 ```
 Note, the 'nickname' argument should be as you entered it in setup, **verbatim**. 
+### Using the Chat
+Using the chat should be fairly straightforward, simply enter your text and press enter. To exit the chat hit ctrl + c. 
+Messages are encrypted by default, but if you'd like to send in plaintext simply add -PLN to the end of your message.
+Messages will appear in the chat in the following format: <br>
+[author discord username]   [Encrypted: True or False]: Message body.
