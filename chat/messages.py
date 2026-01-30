@@ -22,8 +22,11 @@ class OutMessage():
             public_key (members.Recipient.pub_key): the public key of the recipient
             
         """
+        self.pub_key = public_key
+        self.input_text = input_text
         self.output_text = self._process_message()
         self.is_encrypted = True
+        
 
     def _process_message(self):
         """
@@ -37,7 +40,7 @@ class OutMessage():
             return self._encrypt()
         else:
             self.is_encrypted = False
-            return input_text[:-4]
+            return self.input_text[:-4]
 
     def _should_encrypt(self):
         """
@@ -49,7 +52,7 @@ class OutMessage():
 
         header = ''
 
-        msg = "".join([''+x for x in reversed(input_text)])
+        msg = "".join([''+x for x in reversed(self.input_text)])
         try:
             for char in range(4):
                 header = header + msg[char]
@@ -68,8 +71,8 @@ class OutMessage():
             encrypted message (str): a string of the message encoded with the recipient public key
         """
 
-        cipher_rsa = PKCS1_OAEP.new(public_key)
-        byte_msg = input_text.encode("utf-8")
+        cipher_rsa = PKCS1_OAEP.new(self.pub_key)
+        byte_msg = self.input_text.encode("utf-8")
         encrypted_msg = cipher_rsa.encrypt(byte_msg)
         return str(encrypted_msg)
 

@@ -58,7 +58,7 @@ class Session():
             sys.exit()
 
         # gets the last ten messages from the chat and prints them
-        backlog = self.__chat.get_messages('',10,True)
+        backlog = self.__chat.get_messages('',30,True)
         self.__artist.print_messages(backlog)
 
         # sets the last message seen to the most recent message
