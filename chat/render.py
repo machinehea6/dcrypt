@@ -9,8 +9,9 @@ class Artist():
     
     Private Methods:
         _pad_name():
-            Accepts the author a message and returns the name with the addition of padding.
+            Accepts the message author and returns a string which pads the author name to twelve characters wide with spaces.
     """
+
     def __init__(self):
         return
 
@@ -39,11 +40,12 @@ class Artist():
         Returns:
             name (str): A string containing the correctly sized author name.
         """
+
         if len(name) >= 12:
             return name
         else:
             while len(name) < 12:
-                name = name + ' '
+                name = ' ' + name
         return name
 
 

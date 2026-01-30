@@ -50,7 +50,20 @@ class Client():
         self.api_key = os.getenv('api_key')
         self.username, self.user_id = self._disc_details()
 
-    def _disc_details(self):
+    def _disc_details(self) -> tuple:
+        """
+        Private method to retrieve client username and user id.
+
+        Checks the .env file for username and user_id, if it can't find them it will prompt the user for them,
+        write them to the .env file, and update the session environment with their response.
+
+        Parameters:
+            None
+        
+        Returns:
+            username, user_id (str): returns a tuple with username and user id.
+        """
+
         username = os.getenv('username')
         user_id = os.getenv('user_id')
 
@@ -65,20 +78,24 @@ class Client():
             username = os.getenv('username')
             user_id = os.getenv('user_id')
 
-            return username, user_id
+            return (username, user_id)
         else:
-             return username, user_id
+             return (username, user_id)
 
-    def _get_rsa_keys(self):
+    def _get_rsa_keys(self) -> tuple:
         """
-        Private method to retrieve credentials
+        Private method to retrieve rsa key credentials.
+
+        Checks the data/secrets directory for pub_key.pem and priv_key.pem, then returns the contents as RSA.private_key 
+        and RSA.public_key objects.
 
         Parameters:
             None
         
         Returns:
-            credentials (RSA.private_key, RSA.public_key): returns both private and public keys
+            credentials (RSA.private_key, RSA.public_key): returns tuple with client's private and public keys
         """
+
         try:
             with open(f"{ROOT_DIR}/data/secrets/priv_key.pem", "rb") as f:
                 data = f.read()
@@ -103,7 +120,7 @@ class Client():
             print(f"Error: {err}")
             sys.exit()
 
-        return priv_key, pub_key
+        return (priv_key, pub_key)
 
 
 class Recipient():
@@ -128,6 +145,7 @@ class Recipient():
         None
         
     """
+    
     def __init__(self, nickname:str):
         """
         Method to initialize an empty Recipient object
@@ -171,9 +189,10 @@ class Recipient():
             None
         
         Return:
-            public_key (RSA public key): the recipient rsa public key
+            public_key (RSA.public_key): the recipient rsa public key
 
         """
+
         def read_key() -> RSA.public_key:
             with open(f"{ROOT_DIR}/data/{self.nickname}/pub_key.pem", "rb") as f:
                 data = f.read()

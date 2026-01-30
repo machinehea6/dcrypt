@@ -10,7 +10,7 @@ class OutMessage():
     Attributes:
         input_text (str): the raw message that will be processed
         output_text (str): the body of the message to send 
-        to_encrypt (bool): whether the message body will be encrypted before sending, defaults to true
+        to_encrypt (bool): whether the message body will be encrypted before sending, defaults to True
         public_key (Recipeint.pub_key): public key for encryption 
     
     Private Methods:
@@ -82,6 +82,7 @@ class OutMessage():
         Returns: 
             encrypted message (str): a string of the message encoded with the recipient public key
         """
+
         cipher_rsa = PKCS1_OAEP.new(self.pub_key)
         byte_msg = self.input_text.encode("utf-8")
         encrypted_msg = cipher_rsa.encrypt(byte_msg)
@@ -123,6 +124,7 @@ class InMessage():
             private_key (members.Client.priv_key): the private key of the client
 
         """
+
         self.is_encrypted = True
         self.priv_key = private_key
         self.input_text = message_json['content']
@@ -175,6 +177,7 @@ class InMessage():
         Returns:
             clean string (str): a string without the byte marks
         """
+
         return_string = ''
         no_bytes = [text[x] for x in range(2, len(text)-1)]
         for i in no_bytes:

@@ -32,6 +32,9 @@ class Chat:
         
         get_messages():
             Fill this out
+
+        ping():
+            Checks the connection to the chat. Returns True if the response is 200, else False.
     """
 
     def __init__(self, nickname:str):
@@ -164,20 +167,6 @@ class Chat:
         else:
             return [InMessage(output, self.client.priv_key) for output in response.json() if output['author']['id'] == self.recipient.disc_id]
     
-    def fetch_latest(self, last_message_id:str='') -> bool:
-        if last_message_id:
-            headers = headers = {'authorization': self.client.api_key}
-            receive = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages?limit=1&after={last_message_id}", headers=headers)
-            if (len(receive.json()) > 0):
-                if receive.json()[0]['author']['id'] == self.recipient.disc_id:
-                    return True
-            else: 
-                return False
-        else:
-            headers = headers = {'authorization': self.client.api_key}
-            receive = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages?limit=1", headers=headers)
-            return receive.json()[0]['id']
-    
     def ping(self) -> bool:
         """
         Method to check the connection status of a chat.
@@ -185,6 +174,7 @@ class Chat:
         Returns:
             connection status (bool): true if 200, false if other.
         """
+        
         response = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages")
         if response.status_code == 200:
             return True
