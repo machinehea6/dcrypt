@@ -28,13 +28,13 @@ def main():
                 if argument == 'new_chat':
                     chat = NewChat(possible_args[argument])
                     session = Session(chat)
-                    session._main_loop()
+                    session.start_session()
                     
                 
                 elif argument == 'open_chat':
                     chat = ExisChat(possible_args[argument])
                     session = Session(chat)
-                    session._main_loop()
+                    session.start_session()
                 
                 else:
                     print("Failure parsing args. Please enter your argument and option verbatim without quotation marks and separated by a space.\n")

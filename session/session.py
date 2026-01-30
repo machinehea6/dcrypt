@@ -1,7 +1,7 @@
 from chat import chat
 from chat import render
 from chat import messages
-import setup
+from session import setup
 import threading
 import time 
 
@@ -38,6 +38,7 @@ class Session():
         self.recipient = self.chat.recipient
         self.artist = render.Artist()
         self.is_updating = False
+        self.last_message_seen = ''
         self.setup_tool = setup.SetupUtils()
 
     def start_session(self):
@@ -46,6 +47,17 @@ class Session():
         else:
             sys.exit()
 
+        backlog = self.chat.get_messages('',10,True)
+        self.artist.print_messages(backlog)
+        self.last_message_seen = backlog[0].msg_id
+
+        main_thread = threading.Thread(name='update_chat', target=self._update_chat, daemon=True)
+
+        main_thread.start()
+
+        while True:
+            self._take_input()
+            time.sleep(.1)
 
     def _confirm_connection(self):
         if self.chat.ping:
@@ -73,14 +85,51 @@ class Session():
         while True:
             self._take_input()
 
+    def _update_chat(self):
+        while True:
+            if self.is_updating:
+                pass
+            else:
+                self.is_updating = True
+                new_batch = self.chat.get_messages(self.last_message_seen,10, False,self.recipient.disc_id)
+                if new_batch:
+                    self.artist.print_messages(new_batch)
+                    self.last_message_seen = new_batch[0].msg_id
+                    print(">  ")
+                    self.is_updating = False
+                    time.sleep(.3)
+                else:
+                    self.is_updating = False
+                    time.sleep(.3)
+
+
     #no suspicion here
     def _take_input(self):
+        global is_updating
+        global last_message_seen
+
         text = input(">  ")
         if text:
             new_message = chat.OutMessage(text, self.recipient.pub_key)
-            self.chat.send_message(new_message)
-            print(f"{self.artist._pad_name(self.client.username)} [{new_message.is_encrypted}]: {text}\n")
+            while True:
+                if  self.is_updating:
+                    pass
+                else:
+                    break
+            self.is_updating = True
+            new_batch = self.chat.get_messages(self.last_message_seen,10, False,self.recipient.disc_id)
+            if new_batch:
+                self.artist.print_messages(new_batch)
+                self.last_message_seen = new_batch[0].msg_id
+                self.chat.send_message(new_message)
+                print(f"{self.artist._pad_name(self.client.username)} [{new_message.is_encrypted}]: {text}\n")
+                print(">  ")
+                self.is_updating = False
+            else:
+                self.chat.send_message(new_message)
+                print(f"{self.artist._pad_name(self.client.username)} [{new_message.is_encrypted}]: {text}\n")
+                print(">  ")                    
+                self.is_updating = False
 
-
-    
+        
 

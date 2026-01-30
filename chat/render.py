@@ -28,7 +28,7 @@ class Artist():
         for message in reversed(all_messages_to_print): # prints from earliest message to received to latest
             message, author, encrypted = message.output_text, message.author, message.is_encrypted
             print(f"{self._pad_name(author)} [{encrypted}]: {message}\n")
-
+            
     def _pad_name(self, name:Message.author) -> str:
         """
         Private method to pad spaces around the author name for printing. 

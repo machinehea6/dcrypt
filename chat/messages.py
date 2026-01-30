@@ -85,6 +85,7 @@ class OutMessage():
         cipher_rsa = PKCS1_OAEP.new(self.pub_key)
         byte_msg = self.input_text.encode("utf-8")
         encrypted_msg = cipher_rsa.encrypt(byte_msg)
+        print(encrypted_msg)
         return str(encrypted_msg)
 
 class InMessage():
@@ -127,7 +128,8 @@ class InMessage():
         self.input_text = message_json['content']
         self.output_text = self._process_message()
         self.author = message_json['author']['username']
-        self.msg_id = message_json['author']['id']
+        self.msg_id = message_json['id']
+        self.author_id = message_json['author']['id'] 
     
     def _process_message(self):
         """
@@ -151,7 +153,7 @@ class InMessage():
             self.is_encrypted = False
             return self._byte_mark_remover(str(self.input_text.encode('utf=8')))
 
-    def _decrypt(self, input_msg)-> None:
+    def _decrypt(self)-> None:
         """
         Method to decrypt the inbound message
 

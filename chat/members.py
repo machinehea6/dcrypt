@@ -185,7 +185,7 @@ class Recipient():
             return input(f"Enter y when you have placed the file, or changed the title, or press n to close the program.\n").lower()
            
         try:
-            read_key()
+            return read_key()
 
         except FileNotFoundError:
             proceed = prompt_for_file()
