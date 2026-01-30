@@ -11,8 +11,6 @@ class Session():
 
     Attributes:
         __chat (chat.Chat): Private chat object the session will manage.
-        __client (chat.Client): Private Client object
-        __recipient (chat.Recipient): Private recipient object
         __artist (render.Artist): Private Artist object to render chat messages
         __is_updating (bool): Private attribute to prevent race conditions across async. 
         __latest_message_id (str): Private attribute to store the id of the last message retrieved from the chat
@@ -34,8 +32,6 @@ class Session():
     
     def __init__(self, chat:chat.Chat):
         self.__chat = chat
-        self.__client = self.__chat.client
-        self.__recipient = self.__chat.recipient
         self.__artist = render.Artist()
         self.__is_updating = False
         self.__latest_message_id = ''
@@ -129,7 +125,7 @@ class Session():
                 self.__is_updating = True
 
                 # Queries the chat for up to ten new messages from the recipient
-                new_batch = self.__chat.get_messages(self.__latest_message_id,10, False,self.__recipient.disc_id)
+                new_batch = self.__chat.get_messages(self.__latest_message_id,10, False,self.__chat.recipient.disc_id)
                 if new_batch:
                     # Prints messages from new batch
                     self.__artist.print_messages(new_batch)
@@ -159,7 +155,7 @@ class Session():
         time.sleep(.2)
         if text:
             # Stores the user input in a new outgoing chat message
-            new_message = chat.OutMessage(text, self.__recipient.pub_key)
+            new_message = chat.OutMessage(text, self.__chat.recipient.pub_key)
             while True:
                 # Checks if another process is updating the chat
                 if  self.__is_updating:
@@ -171,7 +167,7 @@ class Session():
             self.__is_updating = True
 
             # Checks for new messages from the recipient 
-            new_batch = self.__chat.get_messages(self.__latest_message_id,10, False,self.__recipient.disc_id)
+            new_batch = self.__chat.get_messages(self.__latest_message_id,10, False,self.__chat.recipient.disc_id)
             if new_batch:
                 # If there are new messages prints them to the screen
                 self.__artist.print_messages(new_batch)
@@ -183,7 +179,7 @@ class Session():
                 self.__chat.send_message(new_message)
 
                 # Prints the client's input in the standard format
-                print(f"{self.__artist._pad_name(self.__client.username)} [{new_message.is_encrypted}]: {text}\n")
+                print(f"{self.__artist._pad_name(self.__chat.client.username)} [{new_message.is_encrypted}]: {text}\n")
                 print(">  ")
 
                 # Unblocks other processes from updating the chat
@@ -191,7 +187,7 @@ class Session():
             else:
                 # If no new messages, sends and prints the client message
                 self.__chat.send_message(new_message)
-                print(f"{self.__artist._pad_name(self.__client.username)} [{new_message.is_encrypted}]: {text}\n")
+                print(f"{self.__artist._pad_name(self.__chat.client.username)} [{new_message.is_encrypted}]: {text}\n")
                 print(">  ")        
                 # Unblocks other processes from updating the chat            
                 self.__is_updating = False
