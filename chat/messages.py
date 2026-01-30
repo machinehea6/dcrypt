@@ -51,6 +51,7 @@ class OutMessage():
         if self._should_encrypt():
             return self._encrypt()
         else:
+            self.is_encrypted = False
             return self.input_text[:-4]
 
     def _should_encrypt(self):
@@ -62,7 +63,7 @@ class OutMessage():
         """
 
         header = ''
-        print(self.input_text)
+
         msg = "".join([''+x for x in reversed(self.input_text)])
         try:
             for char in range(4):
@@ -71,7 +72,6 @@ class OutMessage():
             return True
         if header == "NLP-":
             return False
-            self.is_encrypted = False
         else:
             return True
     
@@ -86,7 +86,6 @@ class OutMessage():
         cipher_rsa = PKCS1_OAEP.new(self.pub_key)
         byte_msg = self.input_text.encode("utf-8")
         encrypted_msg = cipher_rsa.encrypt(byte_msg)
-        print(encrypted_msg)
         return str(encrypted_msg)
 
 class InMessage():
