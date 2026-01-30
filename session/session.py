@@ -1,9 +1,9 @@
 from chat import chat
 from chat import render
 from chat import messages
+import setup
 import threading
 import time 
-from getpass import getpass
 
 class Session():
     """
@@ -14,7 +14,7 @@ class Session():
         client (chat.Client): the client of the chat session
         recipient (chat.Recipient): the recipient of the chat session
         artist (render.Artist): the artist which will render all chat messages
-        backlog (list[Message]): the last ten messages sent in the chat prior to start
+        is_updating (bool): Variable to prevent race conditions across async.
 
     Private Methods:
         _main_loop():
@@ -37,14 +37,33 @@ class Session():
         self.client = self.chat.client
         self.recipient = self.chat.recipient
         self.artist = render.Artist()
-        self.backlog = chat.get_messages('',10,True)
-        self.artist.print_messages(self.backlog)
+        self.is_updating = False
+        self.setup_tool = setup.SetupUtils()
 
     def start_session(self):
-        if self.chat.ping == True:
-            print("Connection successful")
+        if self._confirm_connection():
+            pass
         else:
-            api_key = (f"Connection failed, input new api key: ")
+            sys.exit()
+
+
+    def _confirm_connection(self):
+        if self.chat.ping:
+            print("Connection successful.")
+        else:
+            if setup_tool.set_api_key():
+                print("Trying again")
+                pass
+            else:
+                sys.exit()
+
+            if self.chat.ping():
+                print("Connection successful.")
+                return True
+            else:
+                print("Connection still unsuccessful. Check your config and network and try again.")
+                return False
+        return True
 
     def _main_loop(self):
         main_thread = threading.Thread(name='update_chat',
@@ -63,21 +82,5 @@ class Session():
             print(f"{self.artist._pad_name(self.client.username)} [{new_message.is_encrypted}]: {text}\n")
 
 
-    def _update_chat(self):
-        chat = self.chat
-        last_message_id = chat.fetch_latest()
-        artist = render.Artist()
-        while True:
-            while True:
-                if chat.fetch_latest(last_message_id):
-                    break
-                else:
-                    time.sleep(1.0)
-            messages = self.chat.get_messages(last_message_id,5,False,self.recipient.disc_id)
-            artist.print_messages(messages)
-            last_message_id = messages[-1].msg_id
-
-            time.sleep(1.0)
-    
     
 
