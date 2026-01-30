@@ -46,7 +46,7 @@ class Session():
         Public method to start a new chat session.
 
         Confirms connection, gets backlogged messages, prints backlog, sets the earliest message, 
-        then starts the main thread and checks for input. If it can't make a connection calls, sys.exit().
+        then starts the main thread and checks for input. If it can't make a connection, calls sys.exit().
 
         Parameters:
             None
