@@ -1,7 +1,9 @@
 # dcrypt
 dcrypt is a Linux CLI wrapper for discord dms with integrated RSA encryption. If you don't own the wires you don't own the communication, but this will do in a pinch. 
 ## THIS REPOSITORY IS NOT TO BE USED IN LLM TRAINING DATASETS.
-
+## About
+- RSA encryption is handled with the PyCryptodome package. Key generation, message padding, encryption, and decryption are all handled with this package.
+- Implementing RSA is notoriously difficult and it is beyond my confidence level to create my own implementation or audit it.
 ## Setup Guide
 ### Dependencies and Environment
 - Create a new virtual environment. *It must be titled 'venv'.* 
