@@ -9,21 +9,6 @@ class Session():
     """
     Class to create and manage a new chat session.
 
-    Attributes:
-        __chat (chat.Chat): Private chat object the session will manage.
-        __artist (render.Artist): Private Artist object to render chat messages
-        __is_updating (bool): Private attribute to prevent race conditions across async. 
-        __latest_message_id (str): Private attribute to store the id of the last message retrieved from the chat
-        __setup_tool (setup.SetupUtils): Private SetupUtils object to manage recipient and client credentials
-
-    Private Methods:
-        _confirm_connection(self):
-            Checks the connection to the chat, tries to resolve api related failures, returns bool. True if successful connection, else False.
-        _take_input():
-            Prompts the user for input, if it finds it, sends it as a message to the chat.
-        _update_chat():
-            Checks for messages by the recipient newer than what it has seen. If it finds one, prints out up to ten of their messages.
-    
     Public Methods():
         start_session():
             Begins a new chat session. Checks for connection, checks for older messages, and starts the main loop.
@@ -31,9 +16,13 @@ class Session():
     """
     
     def __init__(self, chat:chat.Chat):
+        """Constructs a new Session object."""
+
         self.__chat = chat
         self.__artist = render.Artist()
+        # Initializes __is_updating to False. This attribute works as a lock to manage async update threads.
         self.__is_updating = False
+        # Initializes a blank __latest_message_id attribute. This will store the most recently seen message id.
         self.__latest_message_id = ''
         self.__setup_tool = setup.SetupUtils()
 
@@ -57,8 +46,9 @@ class Session():
         else:
             sys.exit()
 
-        # gets the last ten messages from the chat and prints them
-        backlog = self.__chat.get_messages('',30,True)
+        num_of_messages = 30
+        # gets the last num_of_messages from the chat and prints them
+        backlog = self.__chat.get_messages(None,num_of_messages,True,author_id=None)
         self.__artist.print_messages(backlog)
 
         # sets the last message seen to the most recent message
@@ -86,6 +76,7 @@ class Session():
         
         """
 
+        # Sends an empty get request to the chat, returns True if 200, else False.
         if self.__chat.ping:
             print("Connection successful.")
         else:
@@ -121,7 +112,7 @@ class Session():
             if self.__is_updating:
                 pass
             else:
-                # Sets the updating status to true to prevent duplicate message retrieval and race conditions
+                # Sets the updating status to True to prevent duplicate message retrieval and race conditions
                 self.__is_updating = True
 
                 # Queries the chat for up to ten new messages from the recipient
@@ -142,7 +133,7 @@ class Session():
 
     def _take_input(self):
         """
-        Private method to handle user input to the chat
+        Private method to handle user input to the chat.
 
         Parameters:
             None
@@ -163,7 +154,7 @@ class Session():
                 else:
                     break
             
-            # Blocks other process from updating the chat 
+            # Blocks other processes from updating the chat 
             self.__is_updating = True
 
             # Checks for new messages from the recipient 
@@ -180,7 +171,6 @@ class Session():
 
                 # Prints the client's input in the standard format
                 print(f"{self.__artist._pad_name(self.__chat.client.username)} [{new_message.is_encrypted}]: {text}\n")
-                print(">  ")
 
                 # Unblocks other processes from updating the chat
                 self.__is_updating = False
