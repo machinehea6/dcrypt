@@ -20,18 +20,19 @@ class Chat:
         client (members.Client): a client
         recipient (members.Recipient): a recipient object
         nickname (str): nickname of the chat instance
-        setup_tool (setup.SetupUtils): a SetupUtils object
-    
+
     Private Methods: 
         None 
 
     Public Methods:
-        send_message(chat.messages.OutMessage): 
-            Encrypts the body text of an OutMessage object with the
-            recipient's public key and sends it to the channel with a post request.
+        send_message(): 
+            Sends the body of an OutMessage object with a post request to the channel. 
         
         get_messages():
-            Fill this out
+            Public method to get a batch of messages from the chat.
+            
+        ping():
+            Checks the connection to the chat. Returns True if the response is 200, else False.
     """
 
     def __init__(self, nickname:str):
@@ -45,33 +46,67 @@ class Chat:
         self.nickname = nickname
         self.recipient = chat.members.Recipient(self.nickname)
         self.client = chat.members.Client()
-        self.setup_tool = setup.SetupUtils()
+        self.__setup_tool = setup.SetupUtils()
 
 
-    def send_message(self, message:chat.messages.Message) -> bool:
+    def send_message(self, message:chat.messages.OutMessage) -> bool:
         """
         Method to send a message to a channel.
 
+        Sends the body of an outmessage object to the chat with a post request.
+
+        Initiates a post request, if response.status_code is 200, returns True. If 401 or 403 tries updating api key and making the request again.
+
         Parameters:
-           message (Message): A Message object.
+           message (OutMessage): An OutMessage object.
         
         Returns:
-            sent (bool): returns True if got code 200, returns False if any other.
+            sent (bool): returns True if got code 200, else returns False.
 
         """
 
         def header(api_key:str)->dict:
+            """
+            Helper function to format authorization header.
+
+            Parameters:
+                api_key (str): the api key belonging to the current session. 
+            
+            Returns:
+                headers (dict): 'User Agent': user_agent, 'Authorization' : api_Key 
+            """
+
             return {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0',
                 'Authorization': api_key
             }
 
         def json_data(message_text:str) -> dict:
+            """
+            Helper function to process message data
+
+            Parameters:
+                message_test (str): the body of an OutMessage object
+            
+            Returns:
+                formatted json (dict): 'content' : 'message_text'
+            """
+
             return {
                 'content':message_text
             }
 
         def make_request() -> requests.Response:
+            """
+            Helper function to send a post request to the current channel.
+
+            Parameters:
+                None
+
+            Returns:
+                response (requests.response): returns a response object for the post request.
+            """
+
             response = requests.post(
                                 f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages",
                                 headers=header(self.client.api_key),
@@ -79,30 +114,37 @@ class Chat:
                                 )
             return response
         
+        # Calls the make_request function to send a post request containing the body of the OutMessage
         response = make_request()
 
+        # If the post request is successfully completed returns True
         if response.status_code == 200:
             return True
 
-        elif response.status_code == 401: # will set new api key and try again
+        # Checks for reponse 401, unauthorized, and tries updating the api key.
+        elif response.status_code == 401: 
             print(f"Got code 401.\n")
             new_api_key = (f"Enter new api key to try: ")
-            self.setup_tool.change_env_variable('api_key', new_api_key)
+            self.__setup_tool.change_env_variable('api_key', new_api_key)
             self.client.api_key = os.getenv('api_key') # changes client api key for future requests
 
+            # Retries the request, returns True if successful
             if make_request().status_code == 200:
                 return True
 
             else:
+                # Other response codes aren't as easily fixed, exits.
                 print(f"Still could not complete the request. Status code: {response.status_code}")
                 return False
 
-        elif response.status_code == 403: # will set new api key and try again
+        # Checks for 403, forbidden, and tries updating the key and making a new request
+        elif response.status_code == 403:
             print(f"Got code 403.\n")
             new_api_key = (f"Enter new api key to try: ")
-            self.setup_tool.change_env_variable('api_key', new_api_key)
+            self.__setup_tool.change_env_variable('api_key', new_api_key)
             self.client.api_key = os.getenv('api_key') # changes client api key for future requests
 
+            # Retries the request, returns True if successful.
             response = make_request()
             if response.status_code == 200:
                 return True
@@ -164,20 +206,6 @@ class Chat:
         else:
             return [InMessage(output, self.client.priv_key) for output in response.json() if output['author']['id'] == self.recipient.disc_id]
     
-    def fetch_latest(self, last_message_id:str='') -> bool:
-        if last_message_id:
-            headers = headers = {'authorization': self.client.api_key}
-            receive = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages?limit=1&after={last_message_id}", headers=headers)
-            if (len(receive.json()) > 0):
-                if receive.json()[0]['author']['id'] == self.recipient.disc_id:
-                    return True
-            else: 
-                return False
-        else:
-            headers = headers = {'authorization': self.client.api_key}
-            receive = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages?limit=1", headers=headers)
-            return receive.json()[0]['id']
-    
     def ping(self) -> bool:
         """
         Method to check the connection status of a chat.
@@ -185,6 +213,7 @@ class Chat:
         Returns:
             connection status (bool): true if 200, false if other.
         """
+        
         response = requests.get(f"https://discord.com/api/v10/channels/{self.recipient.channel_id}/messages")
         if response.status_code == 200:
             return True
@@ -201,18 +230,6 @@ class NewChat(Chat):
             recipient (Recipient): A recipient object
             nickname (str): nickname of the chat instance
         
-        Private Methods:
-            _get_recip_data():
-                Gets the recipient user id and channel id from the 
-                channel.conf file of the recipient.
-            
-            _setup():
-                Creates a new data directory titled <nickname> and 
-                populates it with a chat_status file and a channel.conf file.
-
-                After this, it prompts the user for the recipient channel id and
-                user id.
-
         Public Methods:
             None
         """
@@ -262,10 +279,13 @@ class NewChat(Chat):
             Returns:
                 None
             """
+
             file_path = f"{ROOT_DIR}/data/{self.nickname}/"
+            # Attempts to make the data directory for the new chat
             try:
-                os.mkdir(file_path)
+                os.mkdir(file_path) 
             except FileExistsError:
+                # If it exists, either continue with the program or exit the program.
                 print("Data directory already exists. ")
                 cont = input("Continue? y/n")
                 if cont == 'y':
@@ -277,9 +297,11 @@ class NewChat(Chat):
                 print("Insufficient permissions to write in data directory")
                 sys.exit()
 
+            # Calls the _get_recip_data method to get the recipient's discord id and channel id.
             data = self._get_recip_data()
 
             try:
+                # Writes the recipient configuration data to the channel.conf file
                 with open(f"{file_path}channel.conf", "w") as conf_file:
                     conf_file.write(json.dumps(data))
 
@@ -289,7 +311,8 @@ class NewChat(Chat):
             except Exception as err:
                 print(f"Error: {err}")
             print(f"Configuration file created for {self.nickname}\n")
-
+            
+            # Creates an empty dictionary that will be used to store chat status.
             status_tracker = json.dumps({'ids':[]})
             try:
                 with open(f"{file_path}chat_status", "w") as conf_file:

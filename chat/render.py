@@ -9,8 +9,9 @@ class Artist():
     
     Private Methods:
         _pad_name():
-            Accepts the author a message and returns the name with the addition of padding.
+            Accepts the message author and returns a string which pads the author name to twelve characters wide with spaces.
     """
+
     def __init__(self):
         return
 
@@ -28,7 +29,7 @@ class Artist():
         for message in reversed(all_messages_to_print): # prints from earliest message to received to latest
             message, author, encrypted = message.output_text, message.author, message.is_encrypted
             print(f"{self._pad_name(author)} [{encrypted}]: {message}\n")
-
+            
     def _pad_name(self, name:Message.author) -> str:
         """
         Private method to pad spaces around the author name for printing. 
@@ -39,11 +40,12 @@ class Artist():
         Returns:
             name (str): A string containing the correctly sized author name.
         """
+
         if len(name) >= 12:
             return name
         else:
             while len(name) < 12:
-                name = name + ' '
+                name = ' ' + name
         return name
 
 
