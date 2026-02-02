@@ -19,7 +19,7 @@ def main():
                     possible_args[argument] = arguments[arguments.index(argument)+1]
                 except IndexError:
                     print("Please enter arguments adjacent to one another.\n")
-                    print("Possible arguments are \'fst\' (enter first time setup),\n\
+                    print("Possible arguments are \'fts\' (enter first time setup),\n\
                         \'new_chat\' <chat_nickname>,\n\
                         or \'open_chat\' <chat_nickname>\n")
                     print("Please only enter one of these options.")
