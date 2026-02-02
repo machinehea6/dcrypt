@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 ### Running the Program
 #### General
-- Dcrypt has options fst (first time setup), new_chat, and open_chat. 
+- Dcrypt has options fts (first time setup), new_chat, and open_chat. 
 - fts: takes no arguments and begins first time setup
 - new_chat: takes an argument 'nickname' which will create a new chat config entry titled 'nickname.'
 - open_chat: takes an argument 'nickname' which will create a session based on data in the data/'nickname' directory
