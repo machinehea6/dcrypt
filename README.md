@@ -5,6 +5,7 @@ This project is distributed under a GPL license with the express intent that it 
 ## About
 - RSA encryption is handled with the PyCryptodome package. Key generation, message padding, encryption, and decryption are all handled with this package.
 - Implementing RSA is notoriously difficult and it is beyond my confidence level to create my own implementation or audit it.
+- For stable and working version please stick to x.0.0 releases. Currently 1.0.0 is the last stable version.
 ## Setup Guide
 ### Dependencies and Environment
 - Create a new virtual environment. *It must be titled 'venv'.* 
